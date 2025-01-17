@@ -28,6 +28,13 @@ class TerminalAgent:
         )
         fcntl.fcntl(self.shell.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
         self.shell_pid = self.shell.pid
+    
+    def chat_request(self, messages):
+        response = self.client.chat.completions.create(
+            model="deepseek-chat",
+            messages=messages
+        )
+        return response.choices[0].message
 
     def tool_request(self, messages):
         response = self.client.chat.completions.create(
@@ -37,37 +44,11 @@ class TerminalAgent:
         )
         return response.choices[0].message
 
-    def send_message(self, messages):
-        response = self.client.chat.completions.create(
-            model="deepseek-chat",
-            messages=messages
-        )
-        return response.choices[0].message
-
-    # TODO: implement a singular shell session using subprocess.Popen
     def run_cmd(self, command: str, printcmd: bool) -> str:
         if printcmd:
             cwd = os.readlink(f"/proc/{self.shell_pid}/cwd")
-            print(f"{cwd}$ {command}")
-        
-        # --- Backup code if TODO implementation breaks ---
-        # cmd_out = subprocess.run(
-        #     command,
-        #     shell=True,
-        #     stdout=subprocess.PIPE,
-        #     stderr=subprocess.PIPE,
-        #     text=True
-        # )
-        # out, err = cmd_out.stdout, cmd_out.stderr
-        # if out:
-        #     print(out, end="")
-        #     return out
-        # elif err:
-        #     print(err, end="")
-        #     return err
-        # else:
-        #     return ""
-        # -------------------------------------------------
+            print(f"{cwd}$ {command}", end="")
+            input()
         
         self.shell.stdin.write(command + "\n")
         self.shell.stdin.flush()
